@@ -12,7 +12,8 @@ var argv = require('optimist')
     .describe('w', 'Workload File')
     .argv;
 
-var socket = io(argv.s);
+var socket = io(argv.s),
+    TASK_LIST = [];
 
 socket.on('connect', function () {
     console.log("Connected to Scheduler @ ", socket.io.uri);
@@ -21,8 +22,22 @@ socket.on('connect', function () {
         console.log("Disconnected !");
     });
 
-    socket.on('tasker', function (taskId) {
+    socket.on('taskSubmit', function (taskId) {
+        TASK_LIST.push(taskId);
         console.log("Received taskId : ", taskId);
+    });
+
+    socket.on('taskResult', function (taskResult) {
+        console.log("Received task result => ");
+        console.log("=====================================================");
+        taskResult.Messages.forEach(function (task, i) {
+            console.log("=====================================================");
+            console.log("Message Id: ", task.MessageId);
+            console.log("=====================================================");
+            console.log("Body : ", task.Body);
+            console.log("Attributes : ", task.MessageAttributes);
+            console.log("=====================================================");
+        });
     });
 
     // NOTE: Read workload file
@@ -38,7 +53,7 @@ socket.on('connect', function () {
 });
 
 function submitTask(task) {
-    socket.emit('tasker', task);
+    socket.emit('taskSubmit', task);
 }
 
 /*// NOTE: Read workload file

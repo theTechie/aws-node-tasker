@@ -25,6 +25,7 @@ function getQueueUrl(queueName, callback) {
 // NOTE : Send message to SQS Queue; Returns 'MessageId'
 exports.sendMessage = function (message, callback) {
     var deferred = Q.defer(),
+        queueName = QUEUE_NAME, //NOTE: use master queue
         clientId = uuid.v1();
 
     var params = {
@@ -41,7 +42,7 @@ exports.sendMessage = function (message, callback) {
         }
     };
 
-    return getQueueUrl(QUEUE_NAME).then(function (queueUrl) {
+    return getQueueUrl(queueName).then(function (queueUrl) {
         params.QueueUrl = queueUrl;
 
         SQS.sendMessage(params, function (err, data) {
@@ -54,7 +55,39 @@ exports.sendMessage = function (message, callback) {
 
         return deferred.promise.nodeify(callback);
     });
-}
+};
+
+exports.receiveMessage = function (queueName, callback) {
+    var deferred = Q.defer(),
+        queueName = queueName || QUEUE_NAME;
+
+    console.log("Fetching messages from Queue : ", queueName);
+
+    var params = {
+        QueueUrl: 'STRING_VALUE',
+        /* required */
+        AttributeNames: [
+    'Policy | VisibilityTimeout | MaximumMessageSize | MessageRetentionPeriod | ApproximateNumberOfMessages | ApproximateNumberOfMessagesNotVisible | CreatedTimestamp | LastModifiedTimestamp | QueueArn | ApproximateNumberOfMessagesDelayed | DelaySeconds | ReceiveMessageWaitTimeSeconds | RedrivePolicy'
+  ],
+        MaxNumberOfMessages: 10,
+        MessageAttributeNames: [
+            'clientId'
+        ],
+        VisibilityTimeout: 0,
+        WaitTimeSeconds: 0
+    };
+
+    return getQueueUrl(queueName).then(function (queueUrl) {
+        params.QueueUrl = queueUrl;
+
+        SQS.receiveMessage(params, function (err, data) {
+            if (err) deferred.reject("ERROR: receiveMessage() : " + err + err.stack);
+            else deferred.resolve(data);
+        });
+
+        return deferred.promise.nodeify(callback);
+    });
+};
 
 // NOTE: Print Task List
 exports.printTaskList = function () {

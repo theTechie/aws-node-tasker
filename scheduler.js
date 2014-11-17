@@ -7,13 +7,24 @@ var app = require('express'),
 io.on('connection', function (socket) {
     console.log("Client connected : ", socket.conn.remoteAddress);
 
-    socket.on('tasker', function (task) {
+    socket.on('taskSubmit', function (task) {
         console.log("Received task : ", task);
 
         // NOTE: Send task to SQS and return the taskId to client
         SQS.sendMessage(task).then(function (taskId) {
-            socket.emit('tasker', taskId);
+            socket.emit('taskSubmit', taskId);
         });
+    });
+
+    /*setInterval(function () {
+        console.log("receiving message...");
+        SQS.receiveMessage().then(function (data) {
+            socket.emit('taskResult', data);
+        });
+    }, 5000);*/
+
+    SQS.receiveMessage().then(function (data) {
+        socket.emit('taskResult', data);
     });
 
     socket.on('disconnect', function () {
