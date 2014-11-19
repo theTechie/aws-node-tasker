@@ -1,6 +1,5 @@
 var helper = require('./helper'),
-    Q = require('q'),
-    uuid = require('node-uuid');
+    Q = require('q');
 
 var SQS = new helper.AWS.SQS(),
     QUEUE_NAME = 'CS553',
@@ -22,11 +21,46 @@ function getQueueUrl(queueName, callback) {
     return deferred.promise.nodeify(callback);
 };
 
+// NOTE : delete message on SQS queue (client) after reading the message
+function deleteMessage(queueUrl, receiptHandle, callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        QueueUrl: queueUrl,
+        /* required */
+        ReceiptHandle: receiptHandle /* required */
+    };
+
+    SQS.deleteMessage(params, function (err, data) {
+        if (err) deferred.reject("ERROR: deleteMessage() : " + err + err.stack);
+        else deferred.resolve(data);
+    });
+
+    return deferred.promise.nodeify(callback);
+};
+
+
+// NOTE: Create SQS Queue
+exports.createQueue = function (queueName, callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        QueueName: queueName
+        /* required */
+    };
+
+    SQS.createQueue(params, function (err, data) {
+        if (err) deferred.reject("ERROR: createQueue() : " + err + err.stack);
+        else deferred.resolve(data);
+    });
+
+    return deferred.promise.nodeify(callback);
+};
+
 // NOTE : Send message to SQS Queue; Returns 'MessageId'
-exports.sendMessage = function (message, callback) {
+exports.sendMessage = function (clientId, message, callback) {
     var deferred = Q.defer(),
-        queueName = QUEUE_NAME, //NOTE: use master queue
-        clientId = uuid.v1();
+        queueName = QUEUE_NAME; //NOTE: use master queue
 
     var params = {
         MessageBody: message,
@@ -57,6 +91,7 @@ exports.sendMessage = function (message, callback) {
     });
 };
 
+// NOTE : Receive message from SQS queue (client)
 exports.receiveMessage = function (queueName, callback) {
     var deferred = Q.defer(),
         queueName = queueName || QUEUE_NAME;
@@ -69,12 +104,12 @@ exports.receiveMessage = function (queueName, callback) {
         AttributeNames: [
     'Policy | VisibilityTimeout | MaximumMessageSize | MessageRetentionPeriod | ApproximateNumberOfMessages | ApproximateNumberOfMessagesNotVisible | CreatedTimestamp | LastModifiedTimestamp | QueueArn | ApproximateNumberOfMessagesDelayed | DelaySeconds | ReceiveMessageWaitTimeSeconds | RedrivePolicy'
   ],
-        MaxNumberOfMessages: 10,
+        MaxNumberOfMessages: 1,
         MessageAttributeNames: [
             'clientId'
         ],
-        VisibilityTimeout: 0,
-        WaitTimeSeconds: 0
+        VisibilityTimeout: 1,
+        WaitTimeSeconds: 1
     };
 
     return getQueueUrl(queueName).then(function (queueUrl) {
@@ -82,7 +117,16 @@ exports.receiveMessage = function (queueName, callback) {
 
         SQS.receiveMessage(params, function (err, data) {
             if (err) deferred.reject("ERROR: receiveMessage() : " + err + err.stack);
-            else deferred.resolve(data);
+            else {
+                if (data.Messages && data.Messages.length > 0) {
+                    data.Messages.forEach(function (msg, i) {
+                        deleteMessage(params.QueueUrl, msg.ReceiptHandle).then(function (data) {
+                            console.log("Successfully deleted message : ", data);
+                        });
+                    });
+                }
+                deferred.resolve(data);
+            }
         });
 
         return deferred.promise.nodeify(callback);

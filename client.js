@@ -28,16 +28,17 @@ socket.on('connect', function () {
     });
 
     socket.on('taskResult', function (taskResult) {
-        console.log("Received task result => ");
-        console.log("=====================================================");
-        taskResult.Messages.forEach(function (task, i) {
-            console.log("=====================================================");
-            console.log("Message Id: ", task.MessageId);
-            console.log("=====================================================");
-            console.log("Body : ", task.Body);
-            console.log("Attributes : ", task.MessageAttributes);
-            console.log("=====================================================");
-        });
+        if (taskResult.Messages && taskResult.Messages.length > 0) {
+            console.log("Received task result => ");
+            taskResult.Messages.forEach(function (task, i) {
+                console.log("=====================================================");
+                console.log("Message Id: ", task.MessageId);
+                console.log("=====================================================");
+                console.log("Body : ", task.Body);
+                console.log("Attributes : ", task.MessageAttributes);
+                console.log("=====================================================");
+            });
+        }
     });
 
     // NOTE: Read workload file
