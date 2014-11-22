@@ -1,6 +1,7 @@
 var fs = require('fs'),
     Q = require('q'),
     io = require('socket.io-client'),
+    _ = require('underscore'),
     SQS = require('./sqs');
 
 var argv = require('optimist')
@@ -20,6 +21,7 @@ socket.on('connect', function () {
 
     socket.on('disconnect', function () {
         console.log("Disconnected !");
+        TASK_LIST.length = 0;
     });
 
     socket.on('taskSubmit', function (taskId) {
@@ -29,14 +31,14 @@ socket.on('connect', function () {
 
     socket.on('taskResult', function (taskResult) {
         if (taskResult.Messages && taskResult.Messages.length > 0) {
-            console.log("Received task result => ");
             taskResult.Messages.forEach(function (task, i) {
-                console.log("=====================================================");
-                console.log("Message Id: ", task.MessageId);
-                console.log("=====================================================");
-                console.log("Body : ", task.Body);
-                console.log("Attributes : ", task.MessageAttributes);
-                console.log("=====================================================");
+                if (_.contains(TASK_LIST, task.MessageAttributes.taskId.StringValue)) {
+                    console.log("=======TASK-ID:" + task.MessageAttributes.taskId.StringValue + "=======");
+                    console.log("Task Result : ", task.Body);
+                    console.log("===========================================");
+                } else {
+                    console.log("CAUTION : Received task result which does not belong to me !", task);
+                }
             });
         }
     });

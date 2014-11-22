@@ -96,7 +96,7 @@ exports.receiveMessage = function (queueName, callback) {
     var deferred = Q.defer(),
         queueName = queueName || QUEUE_NAME;
 
-    console.log("Fetching messages from Queue : ", queueName);
+    //console.log("Fetching messages from Queue : ", queueName);
 
     var params = {
         QueueUrl: 'STRING_VALUE',
@@ -106,7 +106,7 @@ exports.receiveMessage = function (queueName, callback) {
   ],
         MaxNumberOfMessages: 1,
         MessageAttributeNames: [
-            'clientId'
+            'taskId'
         ],
         VisibilityTimeout: 1,
         WaitTimeSeconds: 1
@@ -131,6 +131,27 @@ exports.receiveMessage = function (queueName, callback) {
 
         return deferred.promise.nodeify(callback);
     });
+};
+
+// NOTE: Create SQS Queue
+exports.deleteQueue = function (queueName, callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        QueueUrl: ''
+        /* required */
+    };
+
+    return getQueueUrl(queueName).then(function (queueUrl) {
+        params.QueueUrl = queueUrl;
+
+        SQS.deleteQueue(params, function (err, data) {
+            if (err) deferred.reject("ERROR: deleteQueue() : " + err + err.stack);
+            else deferred.resolve(data);
+        });
+    });
+
+    return deferred.promise.nodeify(callback);
 };
 
 // NOTE: Print Task List

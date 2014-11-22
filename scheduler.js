@@ -2,8 +2,19 @@ var app = require('express'),
     http = require('http').Server(app),
     io = require('socket.io')(http),
     uuid = require('node-uuid'),
-    SQS = require('./sqs'),
-    port = 4000;
+    SQS = require('./sqs');
+
+var argv = require('optimist')
+    .usage('Usage: $0 -s [PORT] -rw')
+    .demand(['s', 'rw'])
+    .alias('s', 'schedulerport')
+    .describe('s', 'Scheduler Port')
+    .alias('rw', 'remoteworker')
+    .describe('rw', 'Remote Worker')
+    .default('rw', 1)
+    .argv;
+
+var port = argv.s;
 
 io.on('connection', function (socket) {
     console.log("Client connected : ", socket.conn.remoteAddress);
@@ -33,12 +44,12 @@ io.on('connection', function (socket) {
         });
     }, 5000);
 
-    /* SQS.receiveMessage(clientId).then(function (data) {
-        socket.emit('taskResult', data);
-    });*/
-
     socket.on('disconnect', function () {
         console.log("Client disconnected : ", this.conn.remoteAddress);
+        console.log("Deleting client queue...");
+        SQS.deleteQueue(clientId).then(function (data) {
+            console.log("Successfully deleted queue for client : ", clientId);
+        });
     });
 });
 
