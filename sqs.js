@@ -65,7 +65,7 @@ exports.sendMessage = function (clientId, message, callback) {
     var params = {
         MessageBody: message,
         /* required */
-        QueueUrl: 'STRING_VALUE',
+        QueueUrl: '',
         /* required */
         DelaySeconds: 0,
         MessageAttributes: {
@@ -76,7 +76,7 @@ exports.sendMessage = function (clientId, message, callback) {
         }
     };
 
-    return getQueueUrl(queueName).then(function (queueUrl) {
+    getQueueUrl(queueName).then(function (queueUrl) {
         params.QueueUrl = queueUrl;
 
         SQS.sendMessage(params, function (err, data) {
@@ -86,9 +86,11 @@ exports.sendMessage = function (clientId, message, callback) {
                 deferred.resolve(data.MessageId);
             }
         });
-
-        return deferred.promise.nodeify(callback);
+    }, function (error) {
+        deferred.reject(error);
     });
+
+    return deferred.promise.nodeify(callback);
 };
 
 // NOTE : Receive message from SQS queue (client)
@@ -99,7 +101,7 @@ exports.receiveMessage = function (queueName, callback) {
     //console.log("Fetching messages from Queue : ", queueName);
 
     var params = {
-        QueueUrl: 'STRING_VALUE',
+        QueueUrl: '',
         /* required */
         AttributeNames: [
     'Policy | VisibilityTimeout | MaximumMessageSize | MessageRetentionPeriod | ApproximateNumberOfMessages | ApproximateNumberOfMessagesNotVisible | CreatedTimestamp | LastModifiedTimestamp | QueueArn | ApproximateNumberOfMessagesDelayed | DelaySeconds | ReceiveMessageWaitTimeSeconds | RedrivePolicy'
@@ -112,7 +114,7 @@ exports.receiveMessage = function (queueName, callback) {
         WaitTimeSeconds: 1
     };
 
-    return getQueueUrl(queueName).then(function (queueUrl) {
+    getQueueUrl(queueName).then(function (queueUrl) {
         params.QueueUrl = queueUrl;
 
         SQS.receiveMessage(params, function (err, data) {
@@ -128,9 +130,11 @@ exports.receiveMessage = function (queueName, callback) {
                 deferred.resolve(data);
             }
         });
-
-        return deferred.promise.nodeify(callback);
+    }, function (error) {
+        deferred.reject(error);
     });
+
+    return deferred.promise.nodeify(callback);
 };
 
 // NOTE: Delete SQS Queue
@@ -142,13 +146,39 @@ exports.deleteQueue = function (queueName, callback) {
         /* required */
     };
 
-    return getQueueUrl(queueName).then(function (queueUrl) {
+    getQueueUrl(queueName).then(function (queueUrl) {
         params.QueueUrl = queueUrl;
 
         SQS.deleteQueue(params, function (err, data) {
             if (err) deferred.reject("ERROR: deleteQueue() : " + err + err.stack);
             else deferred.resolve(data);
         });
+    }, function (error) {
+        deferred.reject(error);
+    });
+
+    return deferred.promise.nodeify(callback);
+};
+
+// NOTE: Get queueLength of a given queueName
+exports.getQueueLength = function (queueName, callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        QueueUrl: '',
+        /* required */
+        AttributeNames: ['ApproximateNumberOfMessages']
+    };
+
+    getQueueUrl(queueName).then(function (queueUrl) {
+        params.QueueUrl = queueUrl;
+
+        SQS.getQueueAttributes(params, function (err, data) {
+            if (err) deferred.reject("ERROR : getQueueLength() : " + err + err.stack);
+            else deferred.resolve(data.Attributes.ApproximateNumberOfMessages);
+        });
+    }, function (error) {
+        deferred.reject(error);
     });
 
     return deferred.promise.nodeify(callback);
