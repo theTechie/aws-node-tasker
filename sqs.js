@@ -133,7 +133,7 @@ exports.receiveMessage = function (queueName, callback) {
     });
 };
 
-// NOTE: Create SQS Queue
+// NOTE: Delete SQS Queue
 exports.deleteQueue = function (queueName, callback) {
     var deferred = Q.defer();
 
