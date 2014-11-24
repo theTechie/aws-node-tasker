@@ -15,22 +15,23 @@ SQS.getQueueLength('CS553').then(function (length) {
 // - [ wget, "http://slashdot.org", -O, /tmp/index.html ]
 // - [ sh, -xc, "echo $(date) ': hello world!'" ]
 
-var USER_DATA = 'I2Nsb3VkLWNvbmZpZw0KYXB0X3VwZ3JhZGU6IHRydWUNCnJ1bmNtZDoNCiAtIFsgc3VkbywgYXB0LWdldCwgdXBkYXRlIF0NCiAtIFsgc3VkbywgYXB0LWdldCwgaW5zdGFsbCwgZ2l0IF0NCiAtIFsgc3VkbywgYXB0LWdldCwgaW5zdGFsbCwgbm9kZWpzIF0NCiAtIFsgc3VkbywgYXB0LWdldCwgaW5zdGFsbCwgbnBtIF0NCiAtIFsgZ2l0LCBjbG9uZSwgImh0dHBzOi8vZ2l0aHViLmNvbS90aGVUZWNoaWUvYXdzLW5vZGUtdGFza2VyLmdpdCwgYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIGNkLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIG5wbSwgaW5zdGFsbCBdDQogLSBbIG5vZGUsICJ3b3JrZXIuanMiLCAiLWkiLCA1IF0=';
+var USER_DATA = 'I2Nsb3VkLWNvbmZpZw0KcGFja2FnZXM6DQogLSBnaXQNCiAtIG5vZGVqcw0KIC0gbnBtDQpydW5jbWQ6DQogLSBbIGNkLCAiJEhPTUUiIF0NCiAtIFsgZ2l0LCBjbG9uZSwgImh0dHBzOi8vZ2l0aHViLmNvbS90aGVUZWNoaWUvYXdzLW5vZGUtdGFza2VyLmdpdCIsICJhd3Mtbm9kZS10YXNrZXIiIF0NCiAtIFsgY2QsICJhd3Mtbm9kZS10YXNrZXIiIF0NCiAtIFsgbnBtLCBpbnN0YWxsIF0NCiAtIFsgbm9kZWpzLCAid29ya2VyLmpzIiwgIi1pIiwgNSBdDQpmaW5hbF9tZXNzYWdlOiAiVGhlIHN5c3RlbSBpcyBmaW5hbGx5IHVwLCBhZnRlciAkVVBUSU1FIHNlY29uZHMi';
 
 /*#cloud-config
-apt_upgrade: true
+packages:
+ - git
+ - nodejs
+ - npm
 runcmd:
- - [ sudo, apt-get, update ]
- - [ sudo, apt-get, install, git ]
- - [ sudo, apt-get, install, nodejs ]
- - [ sudo, apt-get, install, npm ]
- - [ git, clone, "https://github.com/theTechie/aws-node-tasker.git, aws-node-tasker" ]
+ - [ cd, "$HOME" ]
+ - [ git, clone, "https://github.com/theTechie/aws-node-tasker.git", "aws-node-tasker" ]
  - [ cd, "aws-node-tasker" ]
  - [ npm, install ]
- - [ node, "worker.js", "-i", 5 ]*/
+ - [ nodejs, "worker.js", "-i", 5 ]
+final_message: "The system is finally up, after $UPTIME seconds"*/
 
 EC2.createInstances(1, USER_DATA).then(function (data) {
-    console.log(data.Instances);
+    console.log(data);
 }, function (error) {
     console.error(error);
 });

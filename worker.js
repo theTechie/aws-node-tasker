@@ -1,7 +1,7 @@
 var Q = require('q'),
     _ = require('underscore'),
-    shell = require('shelljs');
-//EC2 = require('./ec2');
+    shell = require('shelljs'),
+    SQS = require('./sqs');
 
 var argv = require('optimist')
     .usage('Usage: $0 -i [TIME_SEC]')
@@ -11,6 +11,12 @@ var argv = require('optimist')
     .argv;
 
 var idleTime = argv.i;
+
+SQS.getQueueLength('CS553').then(function (length) {
+    console.log("Queue Length:", length);
+}, function (error) {
+    console.log(error);
+});
 
 var idleTimer = setTimeout(function () {
     console.log("Idle Timeout Expired, Shutting myself !!");
