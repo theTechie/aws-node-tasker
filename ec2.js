@@ -18,7 +18,7 @@ function waitFor(callback) {
 };
 
 // NOTE: create new instances
-exports.createInstances = function (count, callback) {
+exports.createInstances = function (count, userData, callback) {
     var deferred = Q.defer();
 
     var params = {
@@ -28,8 +28,10 @@ exports.createInstances = function (count, callback) {
         /* required */
         MinCount: count,
         /* required */
+        InstanceInitiatedShutdownBehavior: 'terminate',
         KeyName: 'CS553',
-        SecurityGroups: ['CS553']
+        SecurityGroups: ['CS553'],
+        UserData: userData
     };
 
     EC2.runInstances(params, function (err, data) {
@@ -43,3 +45,17 @@ exports.createInstances = function (count, callback) {
 
     return deferred.promise.nodeify(callback);
 };
+
+// NOTE: terminate instances using intsanceID
+/*exports.terminateInstances = function (instanceIds, callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        InstanceIds: instanceIds
+    };
+
+    EC2.terminateInstances(params, function (err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else console.log(data); // successful response
+    });
+};*/

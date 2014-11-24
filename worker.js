@@ -1,6 +1,7 @@
 var Q = require('q'),
     _ = require('underscore'),
-    EC2 = require('./ec2');
+    shell = require('shelljs');
+//EC2 = require('./ec2');
 
 var argv = require('optimist')
     .usage('Usage: $0 -i [TIME_SEC]')
@@ -11,8 +12,10 @@ var argv = require('optimist')
 
 var idleTime = argv.i;
 
-EC2.createInstances(1).then(function (data) {
-    console.log(data);
-}, function (error) {
-    console.error(error);
-});
+var idleTimer = setTimeout(function () {
+    console.log("Idle Timeout Expired, Shutting myself !!");
+    shell.exec('sudo shutdown -h now', function (code, output) {
+        console.log('Exit Code:', code);
+        console.log('Program output:', output);
+    });
+}, idleTime * 1000);
