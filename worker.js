@@ -1,7 +1,8 @@
 var Q = require('q'),
     _ = require('underscore'),
     shell = require('shelljs'),
-    SQS = require('./sqs');
+    SQS = require('./sqs'),
+    DynamoDB = require('./dynamoDB');
 
 var argv = require('optimist')
     .usage('Usage: $0 -i [TIME_SEC]')
@@ -28,23 +29,31 @@ setInterval(function () {
 
                         clearTimeout(idleTimer);
 
-                        // NOTE: Synchronously process the task
-                        var result = processTask(task.Body);
+                        DynamoDB.addItem(undefined, taskId).then(function (data) {
+                            // added task; continue to process it
 
-                        console.log("Task '" + task.Body + "' completed. Result : " + result);
+                            // NOTE: Synchronously process the task
+                            var result = processTask(task.Body);
 
-                        var messageAttributes = {
-                            taskId: {
-                                DataType: 'String',
-                                StringValue: taskId
-                            }
-                        };
+                            console.log("Task '" + task.Body + "' completed. Result : " + result);
 
-                        console.log("Sending message to resultQ : " + resultQ + ", taskId : " + taskId);
+                            var messageAttributes = {
+                                taskId: {
+                                    DataType: 'String',
+                                    StringValue: taskId
+                                }
+                            };
 
-                        SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
-                            console.log("Task Result Sent Back : ", taskId);
+                            console.log("Sending message to resultQ : " + resultQ + ", taskId : " + taskId);
 
+                            SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
+                                console.log("Task Result Sent Back : ", taskId);
+
+                                idleTimer = startIdleTimer(idleTime);
+                            });
+                        }, function (error) {
+                            // task already being processed by another worker, so ignore
+                            console.log("Task '" + task.Body + "' already being processed by other worker; so ignoring. ");
                             idleTimer = startIdleTimer(idleTime);
                         });
                     });
