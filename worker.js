@@ -66,7 +66,7 @@ function processTask(task) {
 function startIdleTimer(timeInSeconds) {
     return setTimeout(function () {
         console.log('Idle Timeout Expired, Terminating myself !!');
-        shell.exec('sudo shutdown - h now', function (code, output) {
+        shell.exec('sudo shutdown -h now', function (code, output) {
             console.log('Exit Code: ', code);
             console.log('Program output: ', output);
         });
