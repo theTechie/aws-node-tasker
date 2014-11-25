@@ -31,6 +31,8 @@ setInterval(function () {
                         // NOTE: Synchronously process the task
                         var result = processTask(task.Body);
 
+                        console.log("Task '" + task.Body + "' completed. Result : " + result);
+
                         var messageAttributes = {
                             taskId: {
                                 DataType: 'String',
@@ -38,8 +40,10 @@ setInterval(function () {
                             }
                         };
 
+                        console.log("Sending message to resultQ : " + resultQ + ", taskId : " + taskId);
+
                         SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
-                            console.log("Task Result Sent Back :", taskId);
+                            console.log("Task Result Sent Back : ", taskId);
 
                             idleTimer = startIdleTimer(idleTime);
                         });
@@ -60,7 +64,7 @@ function processTask(task) {
         silent: true
     }).output;
 
-    return taskResult;
+    return task + taskResult + 'Completed !';
 }
 
 function startIdleTimer(timeInSeconds) {

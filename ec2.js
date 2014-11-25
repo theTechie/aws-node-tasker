@@ -32,6 +32,9 @@ exports.createInstances = function (count, userData, callback) {
         InstanceInitiatedShutdownBehavior: 'terminate',
         KeyName: 'CS553',
         SecurityGroups: ['CS553'],
+        IamInstanceProfile: {
+            Name: 'dev'
+        },
         UserData: userData
     };
 
