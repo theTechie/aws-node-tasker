@@ -35,7 +35,7 @@ socket.on('connect', function () {
                 if (_.contains(TASK_LIST, task.MessageAttributes.taskId.StringValue)) {
                     console.log("=======TASK-ID:" + task.MessageAttributes.taskId.StringValue + "=======");
                     console.log("Task Result : ", task.Body);
-                    console.log("===========================================");
+                    console.log("==========================================================");
                 } else {
                     console.log("CAUTION : Received task result which does not belong to me !", task);
                 }
@@ -43,14 +43,16 @@ socket.on('connect', function () {
         }
     });
 
-    // NOTE: Read workload file
-    fs.readFile(argv.w, function (err, data) {
-        var buffer = new Buffer(data),
-            tasks = buffer.toString().split('\n');
+    socket.on('READY', function () {
+        // NOTE: Read workload file
+        fs.readFile(argv.w, function (err, data) {
+            var buffer = new Buffer(data),
+                tasks = buffer.toString().split('\n');
 
-        // NOTE: Submit tasks to scheduler
-        tasks.forEach(function (task) {
-            submitTask(task);
+            // NOTE: Submit tasks to scheduler
+            tasks.forEach(function (task) {
+                submitTask(task);
+            });
         });
     });
 });

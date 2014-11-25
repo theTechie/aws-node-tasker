@@ -22,7 +22,8 @@ exports.createInstances = function (count, userData, callback) {
     var deferred = Q.defer();
 
     var params = {
-        ImageId: 'ami-37501207',
+        // NOTE: my AMI with git, nodejs and npm pre-installed
+        ImageId: 'ami-456d3975', //default 64-bit ubuntu 14: 'ami-37501207',
         InstanceType: 't1.micro',
         MaxCount: count,
         /* required */

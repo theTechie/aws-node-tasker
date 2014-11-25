@@ -58,9 +58,9 @@ exports.createQueue = function (queueName, callback) {
 };
 
 // NOTE : Send message to SQS Queue; Returns 'MessageId'
-exports.sendMessage = function (clientId, message, callback) {
+exports.sendMessage = function (queueName, messageAttributes, message, callback) {
     var deferred = Q.defer(),
-        queueName = QUEUE_NAME; //NOTE: use master queue
+        queueName = queueName || QUEUE_NAME; //NOTE: use master queue for messaged from scheduler
 
     var params = {
         MessageBody: message,
@@ -68,12 +68,7 @@ exports.sendMessage = function (clientId, message, callback) {
         QueueUrl: '',
         /* required */
         DelaySeconds: 0,
-        MessageAttributes: {
-            clientId: {
-                DataType: 'String',
-                StringValue: clientId
-            }
-        }
+        MessageAttributes: messageAttributes
     };
 
     getQueueUrl(queueName).then(function (queueUrl) {
@@ -94,7 +89,7 @@ exports.sendMessage = function (clientId, message, callback) {
 };
 
 // NOTE : Receive message from SQS queue (client)
-exports.receiveMessage = function (queueName, callback) {
+exports.receiveMessage = function (queueName, messageAttributes, callback) {
     var deferred = Q.defer(),
         queueName = queueName || QUEUE_NAME;
 
@@ -107,9 +102,7 @@ exports.receiveMessage = function (queueName, callback) {
     'Policy | VisibilityTimeout | MaximumMessageSize | MessageRetentionPeriod | ApproximateNumberOfMessages | ApproximateNumberOfMessagesNotVisible | CreatedTimestamp | LastModifiedTimestamp | QueueArn | ApproximateNumberOfMessagesDelayed | DelaySeconds | ReceiveMessageWaitTimeSeconds | RedrivePolicy'
   ],
         MaxNumberOfMessages: 1,
-        MessageAttributeNames: [
-            'taskId'
-        ],
+        MessageAttributeNames: messageAttributes,
         VisibilityTimeout: 1,
         WaitTimeSeconds: 1
     };

@@ -19,37 +19,48 @@ var port = argv.s;
 io.on('connection', function (socket) {
     console.log("Client connected : ", socket.conn.remoteAddress);
 
-    var clientId = uuid.v1();
+    var clientId = uuid.v1(); // NOTE: clientId == queueName (result queue specific to client)
 
     // NOTE: Create result queue for client => use 'clientId' as 'queueName'
     SQS.createQueue(clientId).then(function (data) {
+
         console.log("Queue created : ", data.QueueUrl);
-    });
 
-    socket.on('taskSubmit', function (task) {
-        console.log("Received task : ", task);
+        socket.emit('READY');
 
-        // NOTE: Send task to SQS and return the taskId to client
-        SQS.sendMessage(clientId, task).then(function (taskId) {
-            socket.emit('taskSubmit', taskId);
+        socket.on('taskSubmit', function (task) {
+            console.log("Received task : ", task);
+
+            var messageAttributes = {
+                clientId: {
+                    DataType: 'String',
+                    StringValue: clientId
+                }
+            };
+
+            // NOTE: Send task to SQS and return the taskId to client
+            SQS.sendMessage(undefined, messageAttributes, task).then(function (taskId) {
+                socket.emit('taskSubmit', taskId);
+            });
         });
-    });
 
-    // NOTE: ReceiveMessage() on QUEUE created on initial request from client
-    setInterval(function () {
-        SQS.receiveMessage(clientId).then(function (data) {
-            if (data.Messages && data.Messages.length > 0) {
-                socket.emit('taskResult', data);
-            }
-        });
-    }, 5000);
+        // NOTE: ReceiveMessage() on QUEUE created on initial request from client
+        setInterval(function () {
+            SQS.receiveMessage(clientId, ['taskId']).then(function (data) {
+                if (data.Messages && data.Messages.length > 0) {
+                    socket.emit('taskResult', data);
+                }
+            });
+        }, 1000);
 
-    socket.on('disconnect', function () {
-        console.log("Client disconnected : ", this.conn.remoteAddress);
-        console.log("Deleting client queue...");
-        SQS.deleteQueue(clientId).then(function (data) {
-            console.log("Successfully deleted queue for client : ", clientId);
+        socket.on('disconnect', function () {
+            console.log("Client disconnected : ", this.conn.remoteAddress);
+            console.log("Deleting client queue...");
+            SQS.deleteQueue(clientId).then(function (data) {
+                console.log("Successfully deleted queue for client : ", clientId);
+            });
         });
+
     });
 });
 
