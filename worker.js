@@ -64,7 +64,7 @@ function processTask(task) {
         silent: true
     }).output;
 
-    return task + taskResult + 'Completed !';
+    return task + taskResult + ' Completed !';
 }
 
 function startIdleTimer(timeInSeconds) {

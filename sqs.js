@@ -8,6 +8,7 @@ var SQS = new helper.AWS.SQS(),
 // NOTE : Get SQS Queue URL
 function getQueueUrl(queueName, callback) {
     var deferred = Q.defer();
+
     var params = {
         QueueName: queueName
     };
@@ -18,6 +19,7 @@ function getQueueUrl(queueName, callback) {
         else
             deferred.resolve(data.QueueUrl);
     });
+
     return deferred.promise.nodeify(callback);
 };
 

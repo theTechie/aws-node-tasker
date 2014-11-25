@@ -13,15 +13,21 @@ var argv = require('optimist')
     .describe('w', 'Workload File')
     .argv;
 
-var socket = io(argv.s),
+var socket = io(argv.scheduler),
     TASK_LIST = [];
+
+if (!fs.existsSync(argv.workload)) {
+    console.log("File does not exist ! : " + argv.workload);
+    process.exit();
+}
 
 socket.on('connect', function () {
     console.log("Connected to Scheduler @ ", socket.io.uri);
 
     socket.on('disconnect', function () {
-        console.log("Disconnected !");
+        console.log("Scheduler went down ! Sorry, I am going down too !");
         TASK_LIST.length = 0;
+        process.exit();
     });
 
     socket.on('taskSubmit', function (taskId) {
@@ -45,7 +51,7 @@ socket.on('connect', function () {
 
     socket.on('READY', function () {
         // NOTE: Read workload file
-        fs.readFile(argv.w, function (err, data) {
+        fs.readFile(argv.workload, function (err, data) {
             var buffer = new Buffer(data),
                 tasks = buffer.toString().split('\n');
 
@@ -60,6 +66,11 @@ socket.on('connect', function () {
 function submitTask(task) {
     socket.emit('taskSubmit', task);
 }
+
+process.on("SIGINT", function () {
+    console.log('Exiting Client !');
+    process.exit();
+});
 
 /*// NOTE: Read workload file
 fs.readFile('./workload.txt', function (err, data) {
