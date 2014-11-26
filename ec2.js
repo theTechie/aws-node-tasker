@@ -3,13 +3,13 @@ var helper = require('./helper'),
 
 var EC2 = new helper.AWS.EC2();
 
-// NOTE: wait until instance passes health checks and is ready to be used; 'instanceStatusOk'
-function waitFor(callback) {
+// NOTE: wait until instance reaches 'status' provided and is ready to be used;
+function waitFor(status, params, callback) {
     var deferred = Q.defer();
 
-    var params = {};
+    var par = params || {};
 
-    EC2.waitFor('instanceStatusOk', params, function (err, data) {
+    EC2.waitFor(status, par, function (err, data) {
         if (err) deferred.reject("ERROR : waitFor() : " + err + err.stack);
         else deferred.resolve(data);
     });
@@ -41,8 +41,66 @@ exports.createInstances = function (count, userData, callback) {
     EC2.runInstances(params, function (err, data) {
         if (err) deferred.reject("ERROR : createInstances() : " + err + err.stack);
         else {
-            waitFor().then(function (data) {
+            var instanceIds = data.Instances.filter(function (instance, i) {
+                return instance.State.Name == 'pending';
+            }).map(function (instance, i) {
+                return instance.InstanceId;
+            });
+
+            var par = {
+                InstanceIds: instanceIds
+            };
+
+            waitFor('instanceRunning', par).then(function (data) {
                 deferred.resolve(data);
+            }, function (error) {
+                deferred.reject(error);
+            });
+        }
+    });
+
+    return deferred.promise.nodeify(callback);
+};
+
+// NOTE: create spot instances
+exports.createSpotInstances = function (instanceCount, userData, callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        SpotPrice: '0.0040',
+        /* required */
+        InstanceCount: instanceCount,
+        LaunchSpecification: {
+            IamInstanceProfile: {
+                Name: 'dev'
+            },
+            ImageId: 'ami-456d3975',
+            InstanceType: 't1.micro',
+            KeyName: 'CS553',
+            SecurityGroups: ['CS553'],
+            UserData: userData
+        },
+        Type: 'one-time'
+    };
+
+    EC2.requestSpotInstances(params, function (err, data) {
+        if (err) deferred.reject("ERROR : createSpotInstances() : " + err + err.stack);
+        else {
+            var instanceIds = data.SpotInstanceRequests.filter(function (instance, i) {
+                return instance.State == 'open';
+            }).map(function (instance, i) {
+                return instance.SpotInstanceRequestId;
+            });
+
+            var par = {
+                SpotInstanceRequestIds: instanceIds
+            };
+
+            waitFor('spotInstanceRequestFulfilled', par).then(function (data) {
+                console.log("waitf or resolved");
+                deferred.resolve(data);
+            }, function (error) {
+                deferred.reject(error);
             });
         }
     });
