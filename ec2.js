@@ -96,12 +96,64 @@ exports.createSpotInstances = function (instanceCount, userData, callback) {
                 SpotInstanceRequestIds: instanceIds
             };
 
-            waitFor('spotInstanceRequestFulfilled', par).then(function (data) {
-                deferred.resolve(data);
-            }, function (error) {
-                deferred.reject(error);
-            });
+            // NOTE: call waitFor('spotInstanceRequestFulfilled') every 15 seconds until request is 'fulfilled'
+            var interval = setInterval(function () {
+                waitFor('spotInstanceRequestFulfilled', par).then(function (data) {
+                    if (data.SpotInstanceRequests && data.SpotInstanceRequests.length > 0 && data.SpotInstanceRequests[0].Status.Code == 'fulfilled') {
+                        clearInterval(interval);
+
+                        var par = {
+                            InstanceIds: [data.SpotInstanceRequests[0].InstanceId]
+                        };
+
+                        // NOTE: Wait until instance is in 'Running' state
+                        waitFor('instanceRunning', par).then(function (data) {
+                            //NOTE: Cancel Spot Instance Request
+
+                            var params = {
+                                SpotInstanceRequestIds: instanceIds
+                            };
+
+                            EC2.cancelSpotInstanceRequests(params, function (err, data) {
+                                if (err) console.log("ERROR: cancelSpotInstanceRequest() : " + err + err.stack);
+                                else console.log("Successfully cancelled SpotInstanceRequest : ", instanceIds);
+                            });
+
+                            deferred.resolve(data);
+                        }, function (error) {
+                            deferred.reject(error);
+                        });
+                    }
+                }, function (err) {
+                    deferred.reject(err);
+                });
+            }, 15000);
         }
+    });
+
+    return deferred.promise.nodeify(callback);
+};
+
+// NOTE: get number of spot instances in 'pending' and 'running' states
+exports.describeInstances = function (callback) {
+    var deferred = Q.defer();
+
+    var params = {
+        Filters: [
+            {
+                Name: 'instance-lifecycle',
+                Values: ['spot']
+            },
+            {
+                Name: 'instance-state-name',
+                Values: ['pending', 'running']
+            }
+        ]
+    };
+
+    EC2.describeInstances(params, function (err, data) {
+        if (err) deferred.reject(err + err.stack);
+        else deferred.resolve(data);
     });
 
     return deferred.promise.nodeify(callback);

@@ -2,32 +2,9 @@ var Q = require('q'),
     _ = require('underscore'),
     SQS = require('./sqs'),
     EC2 = require('./ec2'),
-    DynamoDB = require('./dynamoDB');
-
-/*DynamoDB.createTable().then(function (data) {
-    console.log("Table Created : ", data);
-}, function (error) {
-    console.error("Error creating table : ", error);
-});
-
-DynamoDB.addItem(undefined, '345').then(function (data) {
-    console.log("Added Item to table : ", data);
-}, function (error) {
-    console.error("Duplicate value being added : ", error);
-});
-
-DynamoDB.getItem(undefined, '678998').then(function (data) {
-    console.log("Got Item :", data);
-}, function (error) {
-    console.error("Cannot retrieve item : ", error);
-});*/
-
-
-//SQS.getQueueLength('CS553').then(function (length) {
-//    console.log("Queue Length:", length);
-//}, function (error) {
-//    console.log(error);
-//});
+    QUEUE_NAME = 'CS553',
+    QUEUE_LENGTH = 0,
+    MAX_INSTANCE_COUNT = 1;
 
 //NOTE : Monitor Queue Length using setInterval() and provision new workers dynamically
 
@@ -48,8 +25,41 @@ final_message: "The system is finally up, after $UPTIME seconds"*/
     console.error(error);
 });*/
 
-EC2.createSpotInstances(1, USER_DATA).then(function (data) {
-    console.log("provisioner:", data);
+// NOTE: Check for tasks on Master Q every 1 second
+setInterval(function () {
+    SQS.getQueueLength(QUEUE_NAME).then(function (length) {
+        console.log("Queue Length:", length);
+
+        // NOTE: get number of spot instances in 'pending' and 'running' state
+        EC2.describeInstances().then(function (data) {
+            var instanceCount = data.Reservations.length;
+
+            console.log("[Provisioner] : Instance Count : ", instanceCount);
+
+            // NOTE: if the number of tasks increased, start a worker
+            if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
+                EC2.createSpotInstances(1, USER_DATA).then(function (data) {
+                    console.log("[Provisioner] : Provisioned 1 Spot Instance.");
+                }, function (error) {
+                    console.error("[Provisioner Error -> createSpotInstances()] : " + error);
+                });
+            }
+        }, function (err) {
+            console.log("[Provisioner Error -> describeInstances()] : " + err);
+        });
+    }, function (error) {
+        console.log("[Provisioner Error -> getQueueLength()] : " + error);
+    });
+}, 1000);
+
+/*EC2.createSpotInstances(1, USER_DATA).then(function (data) {
+    console.log("[Provisioner] : Provisioned 1 Spot Instance.", data);
 }, function (error) {
     console.error(error);
+});*/
+
+// provisioner exited
+process.on("SIGINT", function () {
+    console.log('Exiting Provisioner !');
+    process.exit();
 });
