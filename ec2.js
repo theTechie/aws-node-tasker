@@ -97,7 +97,6 @@ exports.createSpotInstances = function (instanceCount, userData, callback) {
             };
 
             waitFor('spotInstanceRequestFulfilled', par).then(function (data) {
-                console.log("waitf or resolved");
                 deferred.resolve(data);
             }, function (error) {
                 deferred.reject(error);
