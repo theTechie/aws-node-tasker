@@ -8,12 +8,23 @@ var argv = require('optimist')
     .usage('Usage: $0 -i [TIME_SEC]')
     .demand(['i'])
     .alias('i', 'timesec')
-    .describe('s', 'Idle Time in seconds')
+    .describe('i', 'Idle Time in seconds')
+    .default('i', '0')
     .argv;
 
-var idleTime = argv.i,
-    idleTimer = startIdleTimer(idleTime),
+var idleTime = argv.i;
+
+var idleTimer,
+    noTimer = false,
     QUEUE_NAME = 'CS553';
+
+if (idleTime == 0) {
+    noTimer = true;
+    console.log("[WORKER] : worker running with default value of 0 for Idle Time");
+} else {
+    idleTimer = startIdleTimer(idleTime);
+}
+
 
 // NOTE: Check for tasks on Master Q every 1 second
 setInterval(function () {
@@ -27,13 +38,14 @@ setInterval(function () {
                         var resultQ = task.MessageAttributes.clientId.StringValue,
                             taskId = task.MessageId; // messageId in Master Q is the taskId which will be verified at client
 
-                        clearTimeout(idleTimer);
+                        if (!noTimer)
+                            clearTimeout(idleTimer);
 
                         DynamoDB.addItem(undefined, taskId).then(function (data) {
                             // added task; continue to process it
 
                             // NOTE: Synchronously process the task
-                            var result = processTask(task.Body);
+                            //var result = processTask(task.Body);
 
                             console.log("Task '" + task.Body + "' completed. Result : " + result);
 
@@ -49,12 +61,15 @@ setInterval(function () {
                             SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
                                 console.log("Task Result Sent Back : ", taskId);
 
-                                idleTimer = startIdleTimer(idleTime);
+                                if (!noTimer)
+                                    idleTimer = startIdleTimer(idleTime);
                             });
                         }, function (error) {
                             // task already being processed by another worker, so ignore
                             console.log("Task '" + task.Body + "' already being processed by other worker; so ignoring. ");
-                            idleTimer = startIdleTimer(idleTime);
+
+                            if (!noTimer)
+                                idleTimer = startIdleTimer(idleTime);
                         });
                     });
                 }
@@ -85,3 +100,16 @@ function startIdleTimer(timeInSeconds) {
         });
     }, timeInSeconds * 1000);
 }
+
+// Shutdown instance if worker crashes
+process.on("SIGINT", function () {
+    console.log('Exiting Worker !');
+    console.log('Shutting myself down !');
+
+    shell.exec('sudo shutdown -h now', function (code, output) {
+        console.log('Exit Code: ', code);
+        console.log('Program output: ', output);
+    });
+
+    process.exit();
+});
