@@ -89,31 +89,39 @@ SQS.createQueue(QUEUE_MASTER).then(function (data) {
 function startProvisioner() {
     var USER_DATA = 'I2Nsb3VkLWNvbmZpZw0KcnVuY21kOg0KIC0gWyBjZCwgIiRIT01FIiBdDQogLSBbIGdpdCwgY2xvbmUsICJodHRwczovL2dpdGh1Yi5jb20vdGhlVGVjaGllL2F3cy1ub2RlLXRhc2tlci5naXQiLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIGNkLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIG5wbSwgaW5zdGFsbCBdDQogLSBbIG5vZGVqcywgIndvcmtlci5qcyIsICItaSIsIDUgXQ0KZmluYWxfbWVzc2FnZTogIlRoZSBzeXN0ZW0gaXMgZmluYWxseSB1cCwgYWZ0ZXIgJFVQVElNRSBzZWNvbmRzIg==';
 
+
+    var canProceed = true;
+
     // NOTE: Check for tasks on Master Q every 1 second
     setInterval(function () {
-        SQS.getQueueLength(QUEUE_MASTER).then(function (length) {
-            console.log("Queue Length:", length);
+        if (canProceed) {
+            SQS.getQueueLength(QUEUE_MASTER).then(function (length) {
+                console.log("Queue Length:", length);
 
-            // NOTE: get number of spot instances in 'pending' and 'running' state
-            EC2.describeInstances().then(function (data) {
-                var instanceCount = data.Reservations.length;
+                // NOTE: get number of spot instances in 'pending' and 'running' state
+                EC2.describeInstances().then(function (data) {
+                    var instanceCount = data.Reservations.length;
 
-                console.log("[Provisioner] : Instance Count : ", instanceCount);
+                    console.log("[Provisioner] : Instance Count : ", instanceCount);
 
-                // NOTE: if the number of tasks increased, start a worker
-                if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
-                    EC2.createSpotInstances(1, USER_DATA).then(function (data) {
-                        console.log("[Provisioner] : Provisioned 1 Spot Instance.");
-                    }, function (error) {
-                        console.error("[Provisioner Error -> createSpotInstances()] : " + error);
-                    });
-                }
-            }, function (err) {
-                console.log("[Provisioner Error -> describeInstances()] : " + err);
+                    // NOTE: if the number of tasks increased, start a worker
+                    if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
+                        canProceed = false;
+                        EC2.createSpotInstances(1, USER_DATA).then(function (data) {
+                            console.log("[Provisioner] : Provisioned 1 Spot Instance.");
+                            canProceed = true;
+                        }, function (error) {
+                            console.error("[Provisioner Error -> createSpotInstances()] : " + error);
+                            canProceed = true;
+                        });
+                    }
+                }, function (err) {
+                    console.error("[Provisioner Error -> describeInstances()] : " + err);
+                });
+            }, function (error) {
+                console.error("[Provisioner Error -> getQueueLength()] : " + error);
             });
-        }, function (error) {
-            console.log("[Provisioner Error -> getQueueLength()] : " + error);
-        });
+        }
     }, 1000);
 }
 
