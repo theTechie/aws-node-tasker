@@ -65,12 +65,11 @@ setInterval(function () {
 
                                 SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
                                     console.log("Task Result Sent Back : ", taskId);
+                                    canProceed = true;
 
                                     if (!noTimer)
                                         idleTimer = startIdleTimer(idleTime);
                                 });
-
-                                canProceed = true;
                             }, function (error) {
                                 // task already being processed by another worker, so ignore
                                 console.log("Task '" + task.Body + "' already being processed by other worker; so ignoring. ");
