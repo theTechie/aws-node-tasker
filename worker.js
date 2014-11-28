@@ -26,58 +26,68 @@ if (idleTime == 0) {
 }
 
 
+var canProceed = true;
+
 // NOTE: Check for tasks on Master Q every 1 second
 setInterval(function () {
-    SQS.getQueueLength(QUEUE_NAME).then(function (length) {
-        console.log("Queue Length:", length);
-        // NOTE: if there are tasks in Q, fetch task, process and then return the response
-        if (length > 0) {
-            SQS.receiveMessage(QUEUE_NAME, ['clientId']).then(function (data) {
-                if (data.Messages && data.Messages.length > 0) {
-                    data.Messages.forEach(function (task, i) {
-                        var resultQ = task.MessageAttributes.clientId.StringValue,
-                            taskId = task.MessageId; // messageId in Master Q is the taskId which will be verified at client
+    if (canProceed) {
+        SQS.getQueueLength(QUEUE_NAME).then(function (length) {
+            console.log("Queue Length:", length);
+            // NOTE: if there are tasks in Q, fetch task, process and then return the response
+            if (length > 0) {
+                canProceed = false;
 
-                        if (!noTimer)
-                            clearTimeout(idleTimer);
+                SQS.receiveMessage(QUEUE_NAME, ['clientId']).then(function (data) {
+                    if (data.Messages && data.Messages.length > 0) {
+                        data.Messages.forEach(function (task, i) {
+                            var resultQ = task.MessageAttributes.clientId.StringValue,
+                                taskId = task.MessageId; // messageId in Master Q is the taskId which will be verified at client
 
-                        DynamoDB.addItem(undefined, taskId).then(function (data) {
-                            // added task; continue to process it
+                            if (!noTimer)
+                                clearTimeout(idleTimer);
 
-                            // NOTE: Synchronously process the task
-                            //var result = processTask(task.Body);
+                            DynamoDB.addItem(undefined, taskId).then(function (data) {
+                                // added task; continue to process it
 
-                            console.log("Task '" + task.Body + "' completed. Result : " + result);
+                                // NOTE: Synchronously process the task
+                                var result = processTask(task.Body);
 
-                            var messageAttributes = {
-                                taskId: {
-                                    DataType: 'String',
-                                    StringValue: taskId
-                                }
-                            };
+                                console.log("Task '" + task.Body + "' completed. Result : " + result);
 
-                            console.log("Sending message to resultQ : " + resultQ + ", taskId : " + taskId);
+                                var messageAttributes = {
+                                    taskId: {
+                                        DataType: 'String',
+                                        StringValue: taskId
+                                    }
+                                };
 
-                            SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
-                                console.log("Task Result Sent Back : ", taskId);
+                                console.log("Sending message to resultQ : " + resultQ + ", taskId : " + taskId);
+
+                                SQS.sendMessage(resultQ, messageAttributes, result).then(function (taskId) {
+                                    console.log("Task Result Sent Back : ", taskId);
+
+                                    if (!noTimer)
+                                        idleTimer = startIdleTimer(idleTime);
+                                });
+
+                                canProceed = true;
+                            }, function (error) {
+                                // task already being processed by another worker, so ignore
+                                console.log("Task '" + task.Body + "' already being processed by other worker; so ignoring. ");
 
                                 if (!noTimer)
                                     idleTimer = startIdleTimer(idleTime);
-                            });
-                        }, function (error) {
-                            // task already being processed by another worker, so ignore
-                            console.log("Task '" + task.Body + "' already being processed by other worker; so ignoring. ");
 
-                            if (!noTimer)
-                                idleTimer = startIdleTimer(idleTime);
+                                canProceed = true;
+                            });
                         });
-                    });
-                }
-            });
-        }
-    }, function (error) {
-        console.log(error);
-    });
+                    }
+                });
+            }
+        }, function (error) {
+            console.log(error);
+        });
+    }
 }, 1000);
 
 // NOTE: Synchronous process of task
