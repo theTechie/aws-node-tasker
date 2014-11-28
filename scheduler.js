@@ -94,36 +94,31 @@ function startProvisioner() {
 
     // NOTE: Check for tasks on Master Q every 1 second
     setInterval(function () {
-        if (canProceed) {
-            SQS.getQueueLength(QUEUE_MASTER).then(function (length) {
-                console.log("Queue Length:", length);
+        SQS.getQueueLength(QUEUE_MASTER).then(function (length) {
+            console.log("Queue Length:", length);
 
-                // NOTE: get number of spot instances in 'pending' and 'running' state
-                EC2.describeInstances().then(function (data) {
-                    var instanceCount = data.Reservations.length;
+            // NOTE: get number of spot instances in 'pending' and 'running' state
+            EC2.describeInstances().then(function (data) {
+                var instanceCount = data.Reservations.length;
 
-                    console.log("[Provisioner] : Instance Count : ", instanceCount);
+                console.log("[Provisioner] : Instance Count : ", instanceCount);
 
-                    // NOTE: if the number of tasks increased, start a worker
-                    if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
-                        canProceed = false;
-                        QUEUE_LENGTH = length;
+                // NOTE: if the number of tasks increased, start a worker
+                if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
+                    QUEUE_LENGTH = length;
 
-                        EC2.createSpotInstances(1, USER_DATA).then(function (data) {
-                            console.log("[Provisioner] : Provisioned 1 Spot Instance.");
-                            canProceed = true;
-                        }, function (error) {
-                            console.error("[Provisioner Error -> createSpotInstances()] : " + error);
-                            canProceed = true;
-                        });
-                    }
-                }, function (err) {
-                    console.error("[Provisioner Error -> describeInstances()] : " + err);
-                });
-            }, function (error) {
-                console.error("[Provisioner Error -> getQueueLength()] : " + error);
+                    EC2.createSpotInstances(1, USER_DATA).then(function (data) {
+                        console.log("[Provisioner] : Provisioned 1 Spot Instance.");
+                    }, function (error) {
+                        console.error("[Provisioner Error -> createSpotInstances()] : " + error);
+                    });
+                }
+            }, function (err) {
+                console.error("[Provisioner Error -> describeInstances()] : " + err);
             });
-        }
+        }, function (error) {
+            console.error("[Provisioner Error -> getQueueLength()] : " + error);
+        });
     }, 1000);
 }
 

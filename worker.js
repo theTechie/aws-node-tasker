@@ -69,6 +69,9 @@ setInterval(function () {
 
                                     if (!noTimer)
                                         idleTimer = startIdleTimer(idleTime);
+                                }, function (err) {
+                                    console.error("Failed to send message to ResultQ. ", err);
+                                    canProceed = true;
                                 });
                             }, function (error) {
                                 // task already being processed by another worker, so ignore
@@ -81,10 +84,12 @@ setInterval(function () {
                             });
                         });
                     }
+                }, function (err) {
+                    console.error("Problem retrieving message from MASTER_QUEUE.", err);
                 });
             }
         }, function (error) {
-            console.log(error);
+            console.error("Error retrieving MASTER_QUEUE length.", error);
         });
     }
 }, 1000);
