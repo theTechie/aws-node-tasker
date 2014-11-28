@@ -107,6 +107,8 @@ function startProvisioner() {
                     // NOTE: if the number of tasks increased, start a worker
                     if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
                         canProceed = false;
+                        QUEUE_LENGTH = length;
+
                         EC2.createSpotInstances(1, USER_DATA).then(function (data) {
                             console.log("[Provisioner] : Provisioned 1 Spot Instance.");
                             canProceed = true;
