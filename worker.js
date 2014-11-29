@@ -118,12 +118,14 @@ function startIdleTimer(timeInSeconds) {
 // Shutdown instance if worker crashes
 process.on("SIGINT", function () {
     console.log('Exiting Worker !');
-    console.log('Shutting myself down !');
 
-    shell.exec('sudo shutdown -h now', function (code, output) {
-        console.log('Exit Code: ', code);
-        console.log('Program output: ', output);
-    });
+    if (!noTimer) {
+        console.log('Shutting myself down !');
 
+        shell.exec('sudo shutdown -h now', function (code, output) {
+            console.log('Exit Code: ', code);
+            console.log('Program output: ', output);
+        });
+    }
     process.exit();
 });
