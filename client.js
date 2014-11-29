@@ -13,7 +13,7 @@ var argv = require('optimist')
     .describe('w', 'Workload File')
     .argv;
 
-var schedulerAddress;
+var schedulerAddress, startTime, endTime;
 
 if (validateAddress(argv.scheduler)) {
     schedulerAddress = "http://" + argv.scheduler;
@@ -51,6 +51,14 @@ socket.on('connect', function () {
                     console.log("=======TASK-ID:" + task.MessageAttributes.taskId.StringValue + "=======");
                     console.log("Task Result : ", task.Body);
                     console.log("==========================================================");
+
+                    TASK_LIST = _.without(TASK_LIST, task.MessageAttributes.taskId.StringValue);
+
+                    if (TASK_LIST.length == 0) {
+                        endTime = Date.now();
+                        console.log("Successfully processed all tasks in " + (endTime - startTime) / 1000 + " seconds !");
+                        process.exit();
+                    }
                 } else {
                     console.log("CAUTION : Received task result which does not belong to me !", task);
                 }
@@ -63,6 +71,8 @@ socket.on('connect', function () {
         fs.readFile(argv.workload, function (err, data) {
             var buffer = new Buffer(data),
                 tasks = buffer.toString().split('\n');
+
+            startTime = Date.now();
 
             // NOTE: Submit tasks to scheduler
             tasks.forEach(function (task) {
