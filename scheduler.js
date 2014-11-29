@@ -95,29 +95,28 @@ function startProvisioner() {
     // NOTE: Check for tasks on Master Q every 1 second
     setInterval(function () {
         SQS.getQueueLength(QUEUE_MASTER).then(function (length) {
-            console.log("Queue Length:", length);
-
             // NOTE: get number of spot instances in 'pending' and 'running' state
             EC2.describeInstances().then(function (data) {
                 var instanceCount = data.Reservations.length;
 
-                console.log("[Provisioner] : Instance Count : ", instanceCount);
+                console.log("[Provisioner] : Queue Length: " + length + ", Instance Count : " + instanceCount);
 
                 // NOTE: if the number of tasks increased, start a worker
-                if (length > QUEUE_LENGTH && instanceCount < MAX_INSTANCE_COUNT) {
-                    QUEUE_LENGTH = length;
+                if (parseInt(length) > parseInt(QUEUE_LENGTH) && parseInt(instanceCount) < parseInt(MAX_INSTANCE_COUNT)) {
+                    console.log("[Provisioner] : Provisioning... 1 Spot Instance.");
 
                     EC2.createSpotInstances(1, USER_DATA).then(function (data) {
                         console.log("[Provisioner] : Provisioned 1 Spot Instance.");
                     }, function (error) {
-                        console.error("[Provisioner Error -> createSpotInstances()] : " + error);
+                        console.error("[Provisioner] : Error -> createSpotInstances() : " + error);
                     });
                 }
+                QUEUE_LENGTH = parseInt(length);
             }, function (err) {
-                console.error("[Provisioner Error -> describeInstances()] : " + err);
+                console.error("[Provisioner] : Error -> describeInstances() : " + err);
             });
         }, function (error) {
-            console.error("[Provisioner Error -> getQueueLength()] : " + error);
+            console.error("[Provisioner] : Error -> getQueueLength() : " + error);
         });
     }, 1000);
 }
