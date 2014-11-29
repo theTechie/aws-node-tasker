@@ -13,7 +13,16 @@ var argv = require('optimist')
     .describe('w', 'Workload File')
     .argv;
 
-var socket = io(argv.scheduler),
+var schedulerAddress;
+
+if (validateAddress(argv.scheduler)) {
+    schedulerAddress = "http://" + argv.scheduler;
+} else {
+    console.log("Please enter a valid IP address and port ! : [IP_ADDRESS]:[PORT] => ", argv.scheduler);
+    process.exit();
+}
+
+var socket = io(schedulerAddress),
     TASK_LIST = [];
 
 if (!fs.existsSync(argv.workload)) {
@@ -65,6 +74,22 @@ socket.on('connect', function () {
 
 function submitTask(task) {
     socket.emit('taskSubmit', task);
+}
+
+// NOTE: check if address is valid (ip:port)
+function validateAddress(entry) {
+  var ip_port = entry.split(":");
+  var blocks = ip_port[0].split(".");
+
+  if (ip_port.length < 2)
+    return false;
+
+  if(blocks.length === 4) {
+    return blocks.every(function(block) {
+      return parseInt(block,10) >=0 && parseInt(block,10) <= 255;
+    });
+  }
+  return false;
 }
 
 process.on("SIGINT", function () {

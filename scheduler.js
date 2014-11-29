@@ -22,24 +22,24 @@ var port = argv.schedulerport,
 
 // NOTE: Create Master Queue : CS553
 SQS.createQueue(QUEUE_MASTER).then(function (data) {
-    console.log("Master Queue created : ", data.QueueUrl);
+    console.log("[Scheduler] : Master Queue created : ", data.QueueUrl);
 
     startProvisioner();
 
     io.on('connection', function (socket) {
-        console.log("Client connected : ", socket.conn.remoteAddress);
+        console.log("[Scheduler] : Client connected : ", socket.conn.remoteAddress);
 
         var clientId = uuid.v1(); // NOTE: clientId == queueName (result queue specific to client)
 
         // NOTE: Create result queue for client => use 'clientId' as 'queueName'
         SQS.createQueue(clientId).then(function (data) {
 
-            console.log("Queue created : ", data.QueueUrl);
+            console.log("[Scheduler] : Client Queue created : ", data.QueueUrl);
 
             socket.emit('READY');
 
             socket.on('taskSubmit', function (task) {
-                console.log("Received task : ", task);
+                console.log("[Scheduler] : Received task : ", task);
 
                 var messageAttributes = {
                     clientId: {
@@ -64,24 +64,24 @@ SQS.createQueue(QUEUE_MASTER).then(function (data) {
             }, 1000);
 
             socket.on('disconnect', function () {
-                console.log("Client disconnected : ", this.conn.remoteAddress);
-                console.log("Deleting client queue...PLEASE WAIT BEFORE EXITING !");
+                console.log("[Scheduler] : Client disconnected : ", this.conn.remoteAddress);
+                console.log("[Scheduler] : Deleting client queue...PLEASE WAIT BEFORE EXITING !");
                 SQS.deleteQueue(clientId).then(function (data) {
-                    console.log("Successfully deleted queue for client : ", clientId);
+                    console.log("[Scheduler] : Successfully deleted queue for client : ", clientId);
                 });
             });
 
         }, function (error) {
-            console.error("'Error creating client response queue : ", error);
+            console.error("'[Scheduler] : Error creating client response queue : ", error);
         });
     });
 
     http.listen(port, function () {
-        console.log("Scheduler running on port " + port + "...");
+        console.log("[Scheduler] : Running on port " + port + "...");
     });
 }, function (error) {
-    console.error("Error creating Master Queue : ", error);
-    console.log('Exiting Scheduler !');
+    console.error("[Scheduler] : Error creating Master Queue : ", error);
+    console.log('[Scheduler] : Exiting Scheduler !');
     process.exit();
 });
 
