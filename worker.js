@@ -91,6 +91,7 @@ setInterval(function () {
             }
         }, function (error) {
             console.error("Error retrieving MASTER_QUEUE length.", error);
+            canProceed = true;
         });
     }
 }, 1000);
