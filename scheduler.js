@@ -6,7 +6,7 @@ var app = require('express'),
     EC2 = require('./ec2');
 
 var argv = require('optimist')
-    .usage('Usage: $0 -s [PORT] -rw')
+    .usage('Usage: $0 -s [PORT] -p [yes | no] -rw')
     .demand(['s', 'p', 'rw'])
     .alias('s', 'schedulerport')
     .describe('s', 'Scheduler Port')

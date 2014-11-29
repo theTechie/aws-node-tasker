@@ -6,7 +6,7 @@ var Q = require('q'),
 
 var argv = require('optimist')
     .usage('Usage: $0 -i [TIME_SEC]')
-    .demand(['i'])
+    //.demand(['i'])
     .alias('i', 'timesec')
     .describe('i', 'Idle Time in seconds')
     .default('i', '0')
