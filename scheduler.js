@@ -7,9 +7,12 @@ var app = require('express'),
 
 var argv = require('optimist')
     .usage('Usage: $0 -s [PORT] -rw')
-    .demand(['s', 'rw'])
+    .demand(['s', 'p', 'rw'])
     .alias('s', 'schedulerport')
     .describe('s', 'Scheduler Port')
+    .alias('p', 'provisioner')
+    .describe('p', 'Provisioner')
+    .default('p', 'yes')
     .alias('rw', 'remoteworker')
     .describe('rw', 'Remote Worker')
     .default('rw', 1)
@@ -24,7 +27,8 @@ var port = argv.schedulerport,
 SQS.createQueue(QUEUE_MASTER).then(function (data) {
     console.log("[Scheduler] : Master Queue created : ", data.QueueUrl);
 
-    startProvisioner();
+    if (argv.p == 'yes')
+        startProvisioner();
 
     io.on('connection', function (socket) {
         console.log("[Scheduler] : Client connected : ", socket.conn.remoteAddress);
