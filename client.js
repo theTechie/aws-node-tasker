@@ -104,6 +104,8 @@ function validateAddress(entry) {
 
 process.on("SIGINT", function () {
     console.log('Exiting Client !');
+    endTime = Date.now();
+    console.log("Successfully processed all tasks in " + (endTime - startTime) / 1000 + " seconds !");
     process.exit();
 });
 
