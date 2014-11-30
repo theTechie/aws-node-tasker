@@ -19,7 +19,7 @@ var argv = require('optimist')
     .argv;
 
 var port = argv.schedulerport,
-    QUEUE_MASTER = 'CS553',
+    QUEUE_MASTER = 'ANIMOTO',
     QUEUE_LENGTH = 0,
     MAX_INSTANCE_COUNT = 1;
 
@@ -55,6 +55,8 @@ SQS.createQueue(QUEUE_MASTER).then(function (data) {
                 // NOTE: Send task to SQS and return the taskId to client
                 SQS.sendMessage(undefined, messageAttributes, task).then(function (taskId) {
                     socket.emit('taskSubmit', taskId);
+                }, function (err) {
+                    console.log("ERROR : sendMessage() : ", err);
                 });
             });
 

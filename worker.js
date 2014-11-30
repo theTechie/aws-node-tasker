@@ -16,7 +16,7 @@ var idleTime = argv.i;
 
 var idleTimer,
     noTimer = false,
-    QUEUE_NAME = 'CS553';
+    QUEUE_NAME = 'ANIMOTO';
 
 if (idleTime == 0) {
     noTimer = true;
@@ -52,7 +52,7 @@ setInterval(function () {
                                 // NOTE: Synchronously process the task
                                 var result = processTask(task.Body);
 
-                                console.log("Task '" + task.Body + "' completed. Result : " + result);
+                                console.log("Task completed. Result : " + result);
 
                                 var messageAttributes = {
                                     taskId: {
@@ -75,7 +75,7 @@ setInterval(function () {
                                 });
                             }, function (error) {
                                 // task already being processed by another worker, so ignore
-                                console.log("Task '" + task.Body + "' already being processed by other worker; so ignoring. ");
+                                console.log("Task already being processed by other worker; so ignoring. ");
 
                                 if (!noTimer)
                                     idleTimer = startIdleTimer(idleTime);
@@ -99,12 +99,28 @@ setInterval(function () {
 }, 1000);
 
 // NOTE: Synchronous process of task
+// 1. Run wget and download images to /images folder
+// 2. Run ffmpeg and create a video
+// 3. Store video in S3
+// 4. Return S3 URL in the task response to client
 function processTask(task) {
     console.log("Performing Task : ", Date.now());
 
-    var taskResult = shell.exec(task, {
-        silent: true
-    }).output;
+    var buffer = new Buffer(task),
+        imageUrls = buffer.toString().split('\n');
+
+    imageUrls.forEach(function (url, i) {
+        var taskResult = shell.exec('wget -O images/' + i + '.jpg ' + url, {
+            silent: true
+        }).output;
+    });
+
+    // create video using images
+    // ffmpeg -f image2 -start_number 0 -i %d.jpg a.mpg
+
+    /*var taskResult = shell.exec(task, {
+    silent: true
+}).output;*/
 
     return task + taskResult + ' Completed !';
 }

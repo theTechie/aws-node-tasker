@@ -29,3 +29,5 @@ node_modules
 
 # Secure files
 config.json
+/animoto-jpeg-urls.json
+/images/

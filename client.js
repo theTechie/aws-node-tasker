@@ -70,14 +70,16 @@ socket.on('connect', function () {
         // NOTE: Read workload file
         fs.readFile(argv.workload, function (err, data) {
             var buffer = new Buffer(data),
-                tasks = buffer.toString().split('\n');
+                task = buffer.toString(); //.split('\n');
 
             startTime = Date.now();
 
-            // NOTE: Submit tasks to scheduler
+            submitTask(task);
+
+            /*// NOTE: Submit tasks to scheduler
             tasks.forEach(function (task) {
                 submitTask(task);
-            });
+            });*/
         });
     });
 });
@@ -88,18 +90,18 @@ function submitTask(task) {
 
 // NOTE: check if address is valid (ip:port)
 function validateAddress(entry) {
-  var ip_port = entry.split(":");
-  var blocks = ip_port[0].split(".");
+    var ip_port = entry.split(":");
+    var blocks = ip_port[0].split(".");
 
-  if (ip_port.length < 2)
+    if (ip_port.length < 2)
+        return false;
+
+    if (blocks.length === 4) {
+        return blocks.every(function (block) {
+            return parseInt(block, 10) >= 0 && parseInt(block, 10) <= 255;
+        });
+    }
     return false;
-
-  if(blocks.length === 4) {
-    return blocks.every(function(block) {
-      return parseInt(block,10) >=0 && parseInt(block,10) <= 255;
-    });
-  }
-  return false;
 }
 
 process.on("SIGINT", function () {

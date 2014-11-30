@@ -2,7 +2,7 @@ var helper = require('./helper'),
     Q = require('q');
 
 var SQS = new helper.AWS.SQS(),
-    QUEUE_NAME = 'CS553',
+    QUEUE_NAME = 'ANIMOTO',
     TASK_LIST = [];
 
 // NOTE : Get SQS Queue URL
