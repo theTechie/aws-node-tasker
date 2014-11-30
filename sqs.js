@@ -103,7 +103,7 @@ exports.receiveMessage = function (queueName, messageAttributes, callback) {
         AttributeNames: [
     'Policy | VisibilityTimeout | MaximumMessageSize | MessageRetentionPeriod | ApproximateNumberOfMessages | ApproximateNumberOfMessagesNotVisible | CreatedTimestamp | LastModifiedTimestamp | QueueArn | ApproximateNumberOfMessagesDelayed | DelaySeconds | ReceiveMessageWaitTimeSeconds | RedrivePolicy'
   ],
-        MaxNumberOfMessages: 1,
+        MaxNumberOfMessages: 10,
         MessageAttributeNames: messageAttributes,
         VisibilityTimeout: 1,
         WaitTimeSeconds: 1
