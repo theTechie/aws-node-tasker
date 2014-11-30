@@ -83,6 +83,8 @@ setInterval(function () {
                                 canProceed = true;
                             });
                         });
+                    } else {
+                        canProceed = true;
                     }
                 }, function (err) {
                     console.error("Problem retrieving message from MASTER_QUEUE.", err);
