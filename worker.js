@@ -1,4 +1,5 @@
 var Q = require('q'),
+    fs = require('fs'),
     _ = require('underscore'),
     shell = require('shelljs'),
     SQS = require('./sqs'),
@@ -110,6 +111,10 @@ function processTask(task) {
     var buffer = new Buffer(task),
         imageUrls = buffer.toString().split('\n');
 
+    shell.exec('mkdir images', {
+        silent: true
+    });
+
     imageUrls.forEach(function (url, i) {
         var taskResult = shell.exec('wget -O images/' + i + '.jpg ' + url, {
             silent: true
@@ -118,7 +123,7 @@ function processTask(task) {
 
     var fileName = Date.now() + '_video.mpg';
 
-    var taskResult_ffmpeg = shell.exec('ffmpeg -f image2 -start_number 0 -i %d.jpg ' + fileName, {
+    var taskResult_ffmpeg = shell.exec('ffmpeg -f image2 -start_number 0 -i images/%d.jpg ' + 'images/' + fileName, {
         silent: true
     }).output;
 
@@ -126,11 +131,14 @@ function processTask(task) {
     // ffmpeg -f image2 -start_number 0 -i %d.jpg a.mpg
     var video_url = 'https://s3-us-west-2.amazonaws.com/cs553-data/' + fileName;
 
-    fs.readFileSync(fileName, function (err, data) {
-        S3.putObject(data).then(function (res) {
-            console.log("Uploaded video.");
-        });
+    var data = fs.readFileSync('images/' + fileName);
+
+    S3.putObject(fileName, data).then(function (res) {
+        console.log("Uploaded video.");
+    }, function (err) {
+        console.log("Error in uploading file to S3.");
     });
+
 
     return 'Video generated : ' + video_url + ' !';
 }

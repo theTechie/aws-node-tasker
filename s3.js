@@ -1,14 +1,16 @@
-var S3 = new helper.AWS.S3(),
+var helper = require('./helper'),
+    Q = require('q'),
+    S3 = new helper.AWS.S3(),
     BUCKET_NAME = 'animotovideos';
 
 // NOTE: put object to datastore
-exports.putObject = function (video, callback) {
+exports.putObject = function (name, video, callback) {
     var deferred = Q.defer();
 
     var params = {
         Bucket: BUCKET_NAME,
         /* required */
-        Key: Date.now(),
+        Key: name,
         /* required */
         ACL: 'public-read',
         Body: video
