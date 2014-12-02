@@ -2,6 +2,7 @@ var Q = require('q'),
     _ = require('underscore'),
     shell = require('shelljs'),
     SQS = require('./sqs'),
+    S3 = require('./s3'),
     DynamoDB = require('./dynamoDB');
 
 var argv = require('optimist')
@@ -115,14 +116,23 @@ function processTask(task) {
         }).output;
     });
 
+    var fileName = Date.now() + '_video.mpg';
+
+    var taskResult_ffmpeg = shell.exec('ffmpeg -f image2 -start_number 0 -i %d.jpg ' + fileName, {
+        silent: true
+    }).output;
+
     // create video using images
     // ffmpeg -f image2 -start_number 0 -i %d.jpg a.mpg
+    var video_url = 'https://s3-us-west-2.amazonaws.com/cs553-data/' + fileName;
 
-    /*var taskResult = shell.exec(task, {
-    silent: true
-}).output;*/
+    fs.readFileSync(fileName, function (err, data) {
+        S3.putObject(data).then(function (res) {
+            console.log("Uploaded video.");
+        });
+    });
 
-    return task + taskResult + ' Completed !';
+    return 'Video generated : ' + video_url + ' !';
 }
 
 function startIdleTimer(timeInSeconds) {

@@ -23,7 +23,7 @@ exports.createInstances = function (count, userData, callback) {
 
     var params = {
         // NOTE: my AMI with git, nodejs and npm pre-installed
-        ImageId: 'ami-456d3975', //default 64-bit ubuntu 14: 'ami-37501207',
+        ImageId: 'ami-4b4d1a7b', //default 64-bit ubuntu 14: 'ami-37501207',
         InstanceType: 't1.micro',
         MaxCount: count,
         /* required */
