@@ -129,7 +129,7 @@ function processTask(task) {
 
     // create video using images
     // ffmpeg -f image2 -start_number 0 -i %d.jpg a.mpg
-    var video_url = 'https://s3-us-west-2.amazonaws.com/cs553-data/' + fileName;
+    var video_url = 'https://s3-us-west-2.amazonaws.com/animotovideos/' + fileName;
 
     var data = fs.readFileSync('images/' + fileName);
 
