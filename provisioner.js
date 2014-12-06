@@ -27,7 +27,7 @@ if (parseInt(argv.idleTime) != argv.idleTime) {
     process.exit();
 }
 
-var USER_DATA_5s_IDLE_TIME = 'I2Nsb3VkLWNvbmZpZw0KcnVuY21kOg0KIC0gWyBjZCwgIiRIT01FIiBdDQogLSBbIGdpdCwgY2xvbmUsICJodHRwczovL2dpdGh1Yi5jb20vdGhlVGVjaGllL2F3cy1ub2RlLXRhc2tlci5naXQiLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIGNkLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIG5wbSwgaW5zdGFsbCBdDQogLSBbIG5vZGVqcywgIndvcmtlci5qcyIsICItaSIsIDUgXQ0KZmluYWxfbWVzc2FnZTogIlRoZSBzeXN0ZW0gaXMgZmluYWxseSB1cCwgYWZ0ZXIgJFVQVElNRSBzZWNvbmRzIg==';
+var USER_DATA_5s_IDLE_TIME = 'I2Nsb3VkLWNvbmZpZw0KcnVuY21kOg0KIC0gWyBjZCwgIiRIT01FIiBdDQogLSBbIGdpdCwgY2xvbmUsICJodHRwczovL2dpdGh1Yi5jb20vdGhlVGVjaGllL2F3cy1ub2RlLXRhc2tlci5naXQiLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIGNkLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIG5wbSwgaW5zdGFsbCBdDQogLSBbIGdpdCwgY2hlY2tvdXQsICJhbmltb3RvLWNsb25lIiBdDQogLSBbIG5vZGVqcywgIndvcmtlci5qcyIsICItaSIsIDUgXQ0KZmluYWxfbWVzc2FnZTogIlRoZSBzeXN0ZW0gaXMgZmluYWxseSB1cCwgYWZ0ZXIgJFVQVElNRSBzZWNvbmRzIg==';
 
 /*#cloud-config
 runcmd:
@@ -35,6 +35,7 @@ runcmd:
  - [ git, clone, "https://github.com/theTechie/aws-node-tasker.git", "aws-node-tasker" ]
  - [ cd, "aws-node-tasker" ]
  - [ npm, install ]
+ - [ git, checkout, "animoto-clone" ]
  - [ nodejs, "worker.js", "-i", 5 ]
 final_message: "The system is finally up, after $UPTIME seconds"*/
 
@@ -44,7 +45,7 @@ final_message: "The system is finally up, after $UPTIME seconds"*/
     console.error(error);
 });*/
 
-var USER_DATA_0s_IDLE_TIME = 'I2Nsb3VkLWNvbmZpZw0KcnVuY21kOg0KIC0gWyBjZCwgIiRIT01FIiBdDQogLSBbIGdpdCwgY2xvbmUsICJodHRwczovL2dpdGh1Yi5jb20vdGhlVGVjaGllL2F3cy1ub2RlLXRhc2tlci5naXQiLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIGNkLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIG5wbSwgaW5zdGFsbCBdDQogLSBbIG5vZGVqcywgIndvcmtlci5qcyIsICItaSIsIDAgXQ0KZmluYWxfbWVzc2FnZTogIlRoZSBzeXN0ZW0gaXMgZmluYWxseSB1cCwgYWZ0ZXIgJFVQVElNRSBzZWNvbmRzIg==';
+var USER_DATA_0s_IDLE_TIME = 'I2Nsb3VkLWNvbmZpZw0KcnVuY21kOg0KIC0gWyBjZCwgIiRIT01FIiBdDQogLSBbIGdpdCwgY2xvbmUsICJodHRwczovL2dpdGh1Yi5jb20vdGhlVGVjaGllL2F3cy1ub2RlLXRhc2tlci5naXQiLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIGNkLCAiYXdzLW5vZGUtdGFza2VyIiBdDQogLSBbIG5wbSwgaW5zdGFsbCBdDQogLSBbIGdpdCwgY2hlY2tvdXQsICJhbmltb3RvLWNsb25lIiBdDQogLSBbIG5vZGVqcywgIndvcmtlci5qcyIsICItaSIsIDAgXQ0KZmluYWxfbWVzc2FnZTogIlRoZSBzeXN0ZW0gaXMgZmluYWxseSB1cCwgYWZ0ZXIgJFVQVElNRSBzZWNvbmRzIg==';
 
 /*#cloud-config
 runcmd:
@@ -52,6 +53,7 @@ runcmd:
  - [ git, clone, "https://github.com/theTechie/aws-node-tasker.git", "aws-node-tasker" ]
  - [ cd, "aws-node-tasker" ]
  - [ npm, install ]
+ - [ git, checkout, "animoto-clone" ]
  - [ nodejs, "worker.js", "-i", 0 ]
 final_message: "The system is finally up, after $UPTIME seconds"*/
 
