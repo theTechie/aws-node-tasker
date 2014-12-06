@@ -37,14 +37,14 @@ setInterval(function () {
             if (length > 0) {
                 canProceed = false;
 
+                if (!noTimer)
+                    clearTimeout(idleTimer);
+
                 SQS.receiveMessage(QUEUE_NAME, ['clientId']).then(function (data) {
                     if (data.Messages && data.Messages.length > 0) {
                         data.Messages.forEach(function (task, i) {
                             var resultQ = task.MessageAttributes.clientId.StringValue,
                                 taskId = task.MessageId; // messageId in Master Q is the taskId which will be verified at client
-
-                            if (!noTimer)
-                                clearTimeout(idleTimer);
 
                             DynamoDB.addItem(undefined, taskId).then(function (data) {
                                 // added task; continue to process it
